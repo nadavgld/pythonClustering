@@ -6,6 +6,7 @@ import xlrd
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class Clustering:
@@ -108,6 +109,11 @@ class Clustering:
             model = KMeans(n_clusters=int(self.nClust), n_init=int(self.nRuns)).fit(self.complete_ready_data)
 
             self.complete_ready_data['Clustering'] = model.labels_
+
+            plt.scatter(x = self.complete_ready_data["Generosity"], y = self.complete_ready_data["Social support"], c=self.complete_ready_data['Clustering'])
+            plt.xlabel('Generosity', fontsize=16)
+            plt.ylabel('Social support', fontsize=16)
+            plt.show()
             print self.complete_ready_data
             print "nadab nadav"
 
