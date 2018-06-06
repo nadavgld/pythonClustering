@@ -1,11 +1,22 @@
-from Tkinter import Tk, Label, Button, Entry, IntVar, END, W, E
-import tkFileDialog
+from Tkinter import Tk, Label, Button, Entry, END, W, E
+import tkMessageBox
+from tkFileDialog import askopenfilename
+import pandas as pd
+import xlrd
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+import numpy as np
 
-class Calculator:
+
+class Clustering:
 
     def __init__(self, master):
+
+        self.filename = ""
+        self.hasPre = False
+        self.rawData = ""
         self.master = master
-        master.title("Python Clustering")
+        master.title("K Means Clustering")
 
         self.label = Label(master, text="")
         self.label.pack()
@@ -32,10 +43,10 @@ class Calculator:
         self.label.grid(row=2, column=0, sticky=W)
         self.label.grid(row=3, column=0, sticky=W)
 
-        self.entry.grid(row=4, column=11, columnspan=5, sticky=W+E)
-        self.browseBtn.grid(row=4, column=2, columnspan=3, sticky=W+E)
+        self.entry.grid(row=4, column=11, columnspan=5, sticky=W + E)
+        self.browseBtn.grid(row=4, column=2, columnspan=3, sticky=W + E)
 
-        self.clustersNum.grid(row=7, column=9, columnspan=3, sticky=W+E)
+        self.clustersNum.grid(row=7, column=9, columnspan=3, sticky=W + E)
         self.clusterNumLabel.grid(row=7, column=2, columnspan=3, sticky=W)
 
         self.clustersRun.grid(row=10, column=9, columnspan=3, sticky=W + E)
@@ -45,15 +56,14 @@ class Calculator:
         self.clusterBtn.grid(row=13, column=11, columnspan=3)
 
     def browseFile(self):
-        from tkFileDialog import askopenfilename
 
         Tk().withdraw()
         self.filename = askopenfilename()
-        self.entry.delete(0,END)
-        self.entry.insert(0,self.filename)
+        self.entry.delete(0, END)
+        self.entry.insert(0, self.filename)
 
     def validate(self, new_text):
-        if not new_text: # the field is being cleared
+        if not new_text:
             self.entered_number = 0
             return True
 
@@ -64,10 +74,30 @@ class Calculator:
             return False
 
     def preProcessing(self):
-        print 1
+        if not self.filename:
+            tkMessageBox.showerror("K Means Clustering", "Please choose file before..")
+        else:
+            self.rawData = pd.ExcelFile(self.filename)
+            self.df = (self.rawData.parse("Data behind Table 2.1 WHR 2017", header=0))
+
+            numeric_data = self.df.iloc[:, 2:]
+            string_data = self.df.iloc[:, 0:1]
+
+            fillNA = numeric_data.apply(lambda x: x.fillna(x.mean()), axis=0)
+            standard = StandardScaler().fit(fillNA).transform(fillNA)
+            standard = pd.DataFrame(standard, columns=numeric_data.columns)
+
+            afterClean = pd.concat([string_data, standard], axis=1)
+
+            self.complete_ready_data = afterClean.groupby(by=afterClean['country'], axis=0).mean()
+            self.hasPre = True
+            tkMessageBox.showinfo("K Means Clustering", "Preprocessing completed successfully!")
 
     def clustering(self):
-        print 2
+        if not self.hasPre:
+            tkMessageBox.showerror("K Means Clustering", "Please preprocess data before..")
+        else:
+            print self.complete_ready_data.count()
 
     # def update(self, method):
     #     if method == "add":
@@ -80,7 +110,8 @@ class Calculator:
     #     self.total_label_text.set(self.total)
     #     self.entry.delete(0, END)
 
+
 root = Tk()
-root.geometry("270x180")
-my_gui = Calculator(root)
+root.geometry("900x580")
+my_gui = Clustering(root)
 root.mainloop()
