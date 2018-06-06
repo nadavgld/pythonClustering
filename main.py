@@ -109,6 +109,7 @@ class Clustering:
 
             self.complete_ready_data['Clustering'] = model.labels_
             print self.complete_ready_data
+            print "guy nadav"
 
 root = Tk()
 root.geometry("900x580")
