@@ -15,6 +15,8 @@ class Clustering:
         self.filename = ""
         self.hasPre = False
         self.rawData = ""
+        self.nClust = -1
+        self.nRuns = -1
         self.master = master
         master.title("K Means Clustering")
 
@@ -94,22 +96,19 @@ class Clustering:
             tkMessageBox.showinfo("K Means Clustering", "Preprocessing completed successfully!")
 
     def clustering(self):
+        self.nClust = self.clustersNum.get()
+        self.nRuns = self.clustersRun.get()
         if not self.hasPre:
             tkMessageBox.showerror("K Means Clustering", "Please preprocess data before..")
+        elif self.nClust == "" or self.nClust <= 0:
+            tkMessageBox.showerror("K Means Clustering", "Please fill positive number of clusters")
+        elif self.nRuns == "" or self.nRuns <= 0:
+            tkMessageBox.showerror("K Means Clustering", "Please fill positive number of runs")
         else:
-            print self.complete_ready_data.count()
+            model = KMeans(n_clusters=int(self.nClust), n_init=int(self.nRuns)).fit(self.complete_ready_data)
 
-    # def update(self, method):
-    #     if method == "add":
-    #         self.total += self.entered_number
-    #     elif method == "subtract":
-    #         self.total -= self.entered_number
-    #     else: # reset
-    #         self.total = 0
-    #
-    #     self.total_label_text.set(self.total)
-    #     self.entry.delete(0, END)
-
+            self.complete_ready_data['Clustering'] = model.labels_
+            print self.complete_ready_data
 
 root = Tk()
 root.geometry("900x580")
