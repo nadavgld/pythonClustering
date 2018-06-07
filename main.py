@@ -47,15 +47,14 @@ class Clustering:
         self.preProcessBtn = Button(master, text="Pre-Process", command=lambda: self.preprocessing())
         self.clusterBtn = Button(master, text="Cluster", command=lambda: self.clustering())
 
-        self.canvas1 = Canvas(master)
-        self.canvas2 = Canvas(master)
-
         # LAYOUT
 
         self.label.grid(row=0, column=0, sticky=W)
         self.label.grid(row=1, column=0, sticky=W)
         self.label.grid(row=2, column=0, sticky=W)
         self.label.grid(row=3, column=0, sticky=W)
+        self.label.grid(row=14, column=0, sticky=W)
+        self.label.grid(row=15, column=0, sticky=W)
 
         self.entry.grid(row=4, column=11, columnspan=5, sticky=W + E)
         self.browseBtn.grid(row=4, column=2, columnspan=3, sticky=W + E)
@@ -120,16 +119,28 @@ class Clustering:
             a.set_xlabel('Generosity', fontsize=16)
             a.set_ylabel('Social support', fontsize=16)
 
+            # Generate second plot
+            fig2 = Figure(figsize=(6, 6),dpi=70)
+            b = fig2.add_subplot(111)
+            b.scatter(x=self.complete_ready_data["Social support"], y=self.complete_ready_data["Social support"],
+                               c=self.complete_ready_data['Clustering'])
+            b.set_xlabel('Social support', fontsize=16)
+            b.set_ylabel('Social support', fontsize=16)
+
             canvas = matplotlib.backends.backend_tkagg.FigureCanvasTkAgg(fig, master=self.window)
-            canvas.get_tk_widget().pack()
+            canvas.get_tk_widget().grid(row=17,column=70)
             canvas.draw()
+
+            canvas2 = matplotlib.backends.backend_tkagg.FigureCanvasTkAgg(fig2, master=self.window)
+            canvas2.get_tk_widget().grid(row=17,column=150)
+            canvas2.draw()
 
 
 # Placing window in the center of the screen
 def center(win):
     win.update_idletasks()
     width = 1200
-    height = 500
+    height = 600
     x = (win.winfo_screenwidth() // 2) - (width // 2)
     y = (win.winfo_screenheight() // 2) - (height // 2)
     win.geometry('{}x{}+{}+{}'.format(width, height, x, y))
