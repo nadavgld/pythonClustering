@@ -1,19 +1,28 @@
-from Tkinter import Tk, Label, Button, Entry, END, W, E, Canvas
+import sys
+from Tkinter import Tk, Label, Button, Entry, END, W, E, Canvas, PhotoImage
 import tkMessageBox
 from tkFileDialog import askopenfilename
+
 from sklearn.cluster import KMeans
 import cleanData
 import numpy as np
 import matplotlib
 # from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+from PIL import ImageTk, Image
 
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
+import plotly.plotly as py
+
+py.sign_in('zaksg', 'n3lh0HSHhO2wjFtFsA9Y')
 
 
 # GUI Class - Clustering
 class Clustering:
+
+    def selectAll(self,event):
+        event.widget.delete(0, END)
 
     # Class initialize and function definition
     def __init__(self, master):
@@ -40,9 +49,15 @@ class Clustering:
 
         self.clustersNum = Entry(master, validate="key", validatecommand=(vcmd, '%P'))
         self.clusterNumLabel = Label(master, text="Num of clusters k")
+        self.clustersNum.bind('<Button-1>', self.selectAll)
+        self.clustersNum.bind('<FocusIn>', self.selectAll)
+        self.clustersNum.pack()
 
         self.clustersRun = Entry(master, validate="key", validatecommand=(vcmd, '%P'))
         self.clustersRunLabel = Label(master, text="Num of runs")
+        self.clustersRun.bind('<Button-1>', self.selectAll)
+        self.clustersRun.bind('<FocusIn>', self.selectAll)
+        self.clustersRun.pack()
 
         self.preProcessBtn = Button(master, text="Pre-Process", command=lambda: self.preprocessing())
         self.clusterBtn = Button(master, text="Cluster", command=lambda: self.clustering())
@@ -108,32 +123,72 @@ class Clustering:
         elif self.nRuns == "" or self.nRuns <= 0:
             tkMessageBox.showerror("K Means Clustering", "Please fill positive number of runs")
         else:
-            model = KMeans(n_clusters=int(self.nClust), n_init=int(self.nRuns)).fit(self.complete_ready_data)
+
+            model = KMeans(n_clusters=int(self.nClust), n_init=int(self.nRuns)).fit(
+                self.complete_ready_data.iloc[:, 1:])
             self.complete_ready_data['Clustering'] = model.labels_
 
-            # Generate scatter plot
-            fig = Figure(figsize=(6, 6),dpi=70)
+            # Generate scatter plot & show on GUI
+            fig = Figure(figsize=(6, 6), dpi=70)
             a = fig.add_subplot(111)
             a.scatter(x=self.complete_ready_data["Generosity"], y=self.complete_ready_data["Social support"],
-                               c=self.complete_ready_data['Clustering'])
+                      c=self.complete_ready_data['Clustering'])
+            a.set_title("Scatter plot for Generosity and Social support by cluster")
             a.set_xlabel('Generosity', fontsize=16)
             a.set_ylabel('Social support', fontsize=16)
 
-            # Generate second plot
-            fig2 = Figure(figsize=(6, 6),dpi=70)
-            b = fig2.add_subplot(111)
-            b.scatter(x=self.complete_ready_data["Social support"], y=self.complete_ready_data["Social support"],
-                               c=self.complete_ready_data['Clustering'])
-            b.set_xlabel('Social support', fontsize=16)
-            b.set_ylabel('Social support', fontsize=16)
-
             canvas = matplotlib.backends.backend_tkagg.FigureCanvasTkAgg(fig, master=self.window)
-            canvas.get_tk_widget().grid(row=17,column=70)
+            canvas.get_tk_widget().grid(row=17, column=18)
             canvas.draw()
 
-            canvas2 = matplotlib.backends.backend_tkagg.FigureCanvasTkAgg(fig2, master=self.window)
-            canvas2.get_tk_widget().grid(row=17,column=150)
-            canvas2.draw()
+            # Generate second plot - Horopleth map & save to disk & show on GUI
+            self.complete_ready_data.reset_index(inplace=True)
+            scl = [[0.0, 'rgb(242,240,247)'], [0.2, 'rgb(218,218,235)'], [0.4, 'rgb(188,189,220)'], \
+                   [0.6, 'rgb(158,154,200)'], [0.8, 'rgb(117,107,177)'], [1.0, 'rgb(84,39,143)']]
+            data = [dict(
+                type='choropleth',
+                colorscale=scl,
+                autocolorscale=False,
+                locations=self.complete_ready_data['country'],
+                z=self.complete_ready_data['Clustering'].astype(float),
+                locationmode='country names',
+                text=self.complete_ready_data['country'],
+                marker=dict(
+                    line=dict(
+                        color='rgb(255,255,255)',
+                        width=2
+                    )),
+                colorbar=dict(
+                    title="Clustering")
+            )]
+
+            layout = dict(
+                title='World Horopleth map',
+                geo=dict(
+                    scope='world',
+                    projection=dict(type='Mercator'),
+                    showlakes=True,
+                    lakecolor='rgb(255, 255, 255)'),
+            )
+
+            fig2 = dict(data=data, layout=layout)
+            py.plot(fig2, filename='d3-cloropleth-map', auto_open=False)
+            py.image.save_as(fig2, filename="world.png")
+
+            im = Image.open('world.png')
+            im = im.resize((520, 320), Image.ANTIALIAS)
+            im = im.convert('RGB').convert('P', palette=Image.ADAPTIVE)
+            im.save('world.gif')
+
+            photo = PhotoImage(file='world.gif')
+            photo.zoom(2)
+            self.worldImg = Label(master=self.window, image=photo)
+            self.worldImg.image = photo
+            self.worldImg.grid(row=17, column=19)
+
+            if tkMessageBox.askokcancel("K Means Clustering", "Clustering completed successfully!"):
+                root.destroy()
+                sys.exit()
 
 
 # Placing window in the center of the screen
