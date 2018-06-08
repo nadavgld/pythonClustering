@@ -3,11 +3,9 @@ from sklearn.preprocessing import StandardScaler
 
 
 def clean(filename):
-    rawData = pd.ExcelFile(filename)
+    df = pd.read_excel(filename)
 
     try:
-        df = (rawData.parse("Data behind Table 2.1 WHR 2017", header=0))
-
         numeric_data = df.iloc[:, 2:]
         string_data = df.iloc[:, 0:1]
 
@@ -17,7 +15,6 @@ def clean(filename):
 
         afterClean = pd.concat([string_data, standard], axis=1)
 
-        # afterClean.groupby(by=afterClean['country'], axis=0).mean();
         return True, afterClean.groupby(by=afterClean['country'], axis=0, as_index=False).mean()
 
     except Exception:
