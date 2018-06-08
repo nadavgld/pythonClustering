@@ -11,6 +11,9 @@ from matplotlib.figure import Figure
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 
+#n3lh0HSHhO2wjFtFsA9Y
+#import plotly.plotly as py
+#py.signup(zaksg, n3lh0HSHhO2wjFtFsA9Y)
 
 # GUI Class - Clustering
 class Clustering:
@@ -108,7 +111,8 @@ class Clustering:
         elif self.nRuns == "" or self.nRuns <= 0:
             tkMessageBox.showerror("K Means Clustering", "Please fill positive number of runs")
         else:
-            model = KMeans(n_clusters=int(self.nClust), n_init=int(self.nRuns)).fit(self.complete_ready_data)
+
+            model = KMeans(n_clusters=int(self.nClust), n_init=int(self.nRuns)).fit(self.complete_ready_data.iloc[:,1:])
             self.complete_ready_data['Clustering'] = model.labels_
 
             # Generate scatter plot
@@ -116,16 +120,53 @@ class Clustering:
             a = fig.add_subplot(111)
             a.scatter(x=self.complete_ready_data["Generosity"], y=self.complete_ready_data["Social support"],
                                c=self.complete_ready_data['Clustering'])
+            a.set_title("Scatter plot for Generosity and Social support by cluster")
             a.set_xlabel('Generosity', fontsize=16)
             a.set_ylabel('Social support', fontsize=16)
 
             # Generate second plot
+
+            # data = [dict(
+            #     type='choropleth',
+            #     locations=self.complete_ready_data['country'],
+            #     z=self.complete_ready_data['Clustering'],
+            #     text=self.complete_ready_data['country'],
+            #     colorscale=[[0, "rgb(5, 10, 172)"], [0.35, "rgb(40, 60, 190)"], [0.5, "rgb(70, 100, 245)"], [0.6, "rgb(90, 120, 245)"], [0.7, "rgb(106, 137, 247)"], [1, "rgb(220, 220, 220)"]],
+            #     autocolorscale=False,
+            #     reversescale=True,
+            #     marker=dict(
+            #         line=dict(
+            #             color='rgb(180,180,180)',
+            #             width=0.5
+            #         )),
+            #     colorbar=dict(
+            #         autotick=False,
+            #         tickprefix='$',
+            #         title='cluster'),
+            # )]
+            #
+            # layout = dict(
+            #     title='',
+            #     geo=dict(
+            #         showframe=False,
+            #         showcoastlines=False,
+            #         projection=dict(
+            #             type='Mercator'
+            #         )
+            #     )
+            # )
+            #
+            # map = dict(data=data, layout=layout)
+            # py.image.save_as(py.iplot(map, validate=False, filename='d3-world-map'), filename = 'map.png')
+
+
             fig2 = Figure(figsize=(6, 6),dpi=70)
             b = fig2.add_subplot(111)
-            b.scatter(x=self.complete_ready_data["Social support"], y=self.complete_ready_data["Social support"],
-                               c=self.complete_ready_data['Clustering'])
-            b.set_xlabel('Social support', fontsize=16)
-            b.set_ylabel('Social support', fontsize=16)
+
+            # b.scatter(x=self.complete_ready_data["Social support"], y=self.complete_ready_data["Social support"],
+            #                    c=self.complete_ready_data['Clustering'])
+            # b.set_xlabel('Social support', fontsize=16)
+            # b.set_ylabel('Social support', fontsize=16)
 
             canvas = matplotlib.backends.backend_tkagg.FigureCanvasTkAgg(fig, master=self.window)
             canvas.get_tk_widget().grid(row=17,column=70)

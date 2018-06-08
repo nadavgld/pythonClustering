@@ -16,4 +16,5 @@ def clean(filename):
 
     afterClean = pd.concat([string_data, standard], axis=1)
 
-    return afterClean.groupby(by=afterClean['country'], axis=0).mean();
+    #afterClean.groupby(by=afterClean['country'], axis=0).mean();
+    return afterClean.groupby(by=afterClean['country'], axis=0, as_index=False).mean();
