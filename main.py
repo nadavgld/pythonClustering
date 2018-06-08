@@ -2,7 +2,6 @@ import sys
 from Tkinter import Tk, Label, Button, Entry, END, W, E, Canvas, PhotoImage
 import tkMessageBox
 from tkFileDialog import askopenfilename
-
 from sklearn.cluster import KMeans
 import cleanData
 import numpy as np
@@ -10,7 +9,6 @@ import matplotlib
 # from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from PIL import ImageTk, Image
-
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import plotly.plotly as py
@@ -21,7 +19,7 @@ py.sign_in('zaksg', 'n3lh0HSHhO2wjFtFsA9Y')
 # GUI Class - Clustering
 class Clustering:
 
-    def selectAll(self,event):
+    def selectAll(self, event):
         event.widget.delete(0, END)
 
     # Class initialize and function definition
@@ -41,7 +39,7 @@ class Clustering:
         self.label = Label(master, text="")
         self.label.pack()
 
-        self.entry = Entry(master)
+        self.entry = Entry(master, state='disabled')
         self.entry.pack()
         self.browseBtn = Button(master, text="Browse", command=self.browseFile)
 
@@ -85,11 +83,12 @@ class Clustering:
 
     # Browse file function - saves filename to self.filename
     def browseFile(self):
-
         Tk().withdraw()
         self.filename = askopenfilename()
+        self.entry.config(state='normal')
         self.entry.delete(0, END)
         self.entry.insert(0, self.filename)
+        self.entry.config(state='disabled')
 
     # Validate function - checks that the entries will get only numbers
     def validate(self, new_text):
@@ -108,9 +107,13 @@ class Clustering:
         if not self.filename:
             tkMessageBox.showerror("K Means Clustering", "Please choose file before..")
         else:
-            self.complete_ready_data = cleanData.clean(self.filename)
-            self.hasPre = True
-            tkMessageBox.showinfo("K Means Clustering", "Preprocessing completed successfully!")
+            donePre, self.complete_ready_data = cleanData.clean(self.filename)
+
+            if not donePre:
+                tkMessageBox.showerror("K Means Clustering", "Could not preprocess selected file")
+            else:
+                self.hasPre = True
+                tkMessageBox.showinfo("K Means Clustering", "Preprocessing completed successfully!")
 
     # Clustering the data using KMeans clustering
     def clustering(self):
