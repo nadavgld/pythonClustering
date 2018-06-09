@@ -137,8 +137,8 @@ class Clustering:
             a.scatter(x=self.complete_ready_data["Generosity"], y=self.complete_ready_data["Social support"],
                       c=self.complete_ready_data['Clustering'])
             a.set_title("Scatter plot for Generosity and Social support by cluster")
-            a.set_xlabel('Generosity', fontsize=16)
-            a.set_ylabel('Social support', fontsize=16)
+            a.set_xlabel('Generosity', fontsize=12)
+            a.set_ylabel('Social support', fontsize=12)
 
             canvas = matplotlib.backends.backend_tkagg.FigureCanvasTkAgg(fig, master=self.window)
             canvas.get_tk_widget().grid(row=17, column=18)
@@ -146,8 +146,9 @@ class Clustering:
 
             # Generate second plot - Horopleth map & save to disk & show on GUI
             self.complete_ready_data.reset_index(inplace=True)
-            scl = [[0.0, 'rgb(242,240,247)'], [0.2, 'rgb(218,218,235)'], [0.4, 'rgb(188,189,220)'], \
-                   [0.6, 'rgb(158,154,200)'], [0.8, 'rgb(117,107,177)'], [1.0, 'rgb(84,39,143)']]
+            # scl = [[0.0, 'rgb(242,240,247)'], [0.2, 'rgb(218,218,235)'], [0.4, 'rgb(188,189,220)'], \
+            #        [0.6, 'rgb(158,154,200)'], [0.8, 'rgb(117,107,177)'], [1.0, 'rgb(84,39,143)']]
+            scl = [[0.0, 'rgb(242,240,247)'], [0.4, 'rgb(188,189,220)'], [0.8, 'rgb(117,107,177)']]
             data = [dict(
                 type='choropleth',
                 colorscale=scl,
@@ -162,11 +163,12 @@ class Clustering:
                         width=2
                     )),
                 colorbar=dict(
-                    title="Clustering")
+                    title="Cluster",
+                    dtick = 1)
             )]
 
             layout = dict(
-                title='World Horopleth map',
+                title='Cluster by country on world map',
                 geo=dict(
                     scope='world',
                     projection=dict(type='Mercator'),
@@ -179,7 +181,7 @@ class Clustering:
             py.image.save_as(fig2, filename="world.png")
 
             im = Image.open('world.png')
-            im = im.resize((520, 320), Image.ANTIALIAS)
+            im = im.resize((520, 420), Image.ANTIALIAS)
             im = im.convert('RGB').convert('P', palette=Image.ADAPTIVE)
             im.save('world.gif')
 
