@@ -2,17 +2,15 @@ import sys
 from Tkinter import Tk, Label, Button, Entry, END, W, E, Canvas, PhotoImage
 import tkMessageBox
 from tkFileDialog import askopenfilename
-from sklearn.cluster import KMeans
 import cleanData
+import clusterData
 import numpy as np
 import matplotlib
-# from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from PIL import ImageTk, Image
 matplotlib.use("TkAgg")
-import matplotlib.pyplot as plt
 import plotly.plotly as py
-
 py.sign_in('zaksg', 'n3lh0HSHhO2wjFtFsA9Y')
 
 
@@ -126,74 +124,75 @@ class Clustering:
         elif self.nRuns == "" or self.nRuns <= 0:
             tkMessageBox.showerror("K Means Clustering", "Please fill positive number of runs")
         else:
+            #run the KMeans model
+            doneCluster, self.complete_ready_data = clusterData.cluster(self.complete_ready_data, self.nClust, self.nRuns)
 
-            model = KMeans(n_clusters=int(self.nClust), n_init=int(self.nRuns)).fit(
-                self.complete_ready_data.iloc[:, 1:])
-            self.complete_ready_data['Clustering'] = model.labels_
+            if not doneCluster:
+                tkMessageBox.showerror("K Means Clustering", "Clustering problems")
+            else:
+                # Generate scatter plot & show on GUI
+                fig = Figure(figsize=(6, 6), dpi=70)
+                a = fig.add_subplot(111)
+                a.scatter(x=self.complete_ready_data["Generosity"], y=self.complete_ready_data["Social support"],
+                          c=self.complete_ready_data['Clustering'])
+                a.set_title("Scatter plot for Generosity and Social support by cluster")
+                a.set_xlabel('Generosity', fontsize=12)
+                a.set_ylabel('Social support', fontsize=12)
 
-            # Generate scatter plot & show on GUI
-            fig = Figure(figsize=(6, 6), dpi=70)
-            a = fig.add_subplot(111)
-            a.scatter(x=self.complete_ready_data["Generosity"], y=self.complete_ready_data["Social support"],
-                      c=self.complete_ready_data['Clustering'])
-            a.set_title("Scatter plot for Generosity and Social support by cluster")
-            a.set_xlabel('Generosity', fontsize=12)
-            a.set_ylabel('Social support', fontsize=12)
+                canvas = matplotlib.backends.backend_tkagg.FigureCanvasTkAgg(fig, master=self.window)
+                canvas.get_tk_widget().grid(row=17, column=18)
+                canvas.draw()
 
-            canvas = matplotlib.backends.backend_tkagg.FigureCanvasTkAgg(fig, master=self.window)
-            canvas.get_tk_widget().grid(row=17, column=18)
-            canvas.draw()
+                # Generate second plot - Horopleth map & save to disk & show on GUI
+                self.complete_ready_data.reset_index(inplace=True)
+                # scl = [[0.0, 'rgb(242,240,247)'], [0.2, 'rgb(218,218,235)'], [0.4, 'rgb(188,189,220)'], \
+                #        [0.6, 'rgb(158,154,200)'], [0.8, 'rgb(117,107,177)'], [1.0, 'rgb(84,39,143)']]
+                scl = [[0.0, 'rgb(242,240,247)'], [0.4, 'rgb(188,189,220)'], [0.8, 'rgb(117,107,177)']]
+                data = [dict(
+                    type='choropleth',
+                    colorscale=scl,
+                    autocolorscale=False,
+                    locations=self.complete_ready_data['country'],
+                    z=self.complete_ready_data['Clustering'].astype(float),
+                    locationmode='country names',
+                    text=self.complete_ready_data['country'],
+                    marker=dict(
+                        line=dict(
+                            color='rgb(255,255,255)',
+                            width=2
+                        )),
+                    colorbar=dict(
+                        title="Cluster",
+                        dtick = 1)
+                )]
 
-            # Generate second plot - Horopleth map & save to disk & show on GUI
-            self.complete_ready_data.reset_index(inplace=True)
-            # scl = [[0.0, 'rgb(242,240,247)'], [0.2, 'rgb(218,218,235)'], [0.4, 'rgb(188,189,220)'], \
-            #        [0.6, 'rgb(158,154,200)'], [0.8, 'rgb(117,107,177)'], [1.0, 'rgb(84,39,143)']]
-            scl = [[0.0, 'rgb(242,240,247)'], [0.4, 'rgb(188,189,220)'], [0.8, 'rgb(117,107,177)']]
-            data = [dict(
-                type='choropleth',
-                colorscale=scl,
-                autocolorscale=False,
-                locations=self.complete_ready_data['country'],
-                z=self.complete_ready_data['Clustering'].astype(float),
-                locationmode='country names',
-                text=self.complete_ready_data['country'],
-                marker=dict(
-                    line=dict(
-                        color='rgb(255,255,255)',
-                        width=2
-                    )),
-                colorbar=dict(
-                    title="Cluster",
-                    dtick = 1)
-            )]
+                layout = dict(
+                    title='Cluster by country on world map',
+                    geo=dict(
+                        scope='world',
+                        projection=dict(type='Mercator'),
+                        showlakes=True,
+                        lakecolor='rgb(255, 255, 255)'),
+                )
 
-            layout = dict(
-                title='Cluster by country on world map',
-                geo=dict(
-                    scope='world',
-                    projection=dict(type='Mercator'),
-                    showlakes=True,
-                    lakecolor='rgb(255, 255, 255)'),
-            )
+                fig2 = dict(data=data, layout=layout)
+                py.plot(fig2, filename='d3-cloropleth-map', auto_open=False)
+                py.image.save_as(fig2, filename="world.png")
 
-            fig2 = dict(data=data, layout=layout)
-            py.plot(fig2, filename='d3-cloropleth-map', auto_open=False)
-            py.image.save_as(fig2, filename="world.png")
+                im = Image.open('world.png')
+                im = im.resize((520, 420), Image.ANTIALIAS)
+                im = im.convert('RGB').convert('P', palette=Image.ADAPTIVE)
+                im.save('world.gif')
 
-            im = Image.open('world.png')
-            im = im.resize((520, 420), Image.ANTIALIAS)
-            im = im.convert('RGB').convert('P', palette=Image.ADAPTIVE)
-            im.save('world.gif')
+                photo = PhotoImage(file='world.gif')
+                photo.zoom(2)
+                self.worldImg = Label(master=self.window, image=photo)
+                self.worldImg.image = photo
+                self.worldImg.grid(row=17, column=19)
 
-            photo = PhotoImage(file='world.gif')
-            photo.zoom(2)
-            self.worldImg = Label(master=self.window, image=photo)
-            self.worldImg.image = photo
-            self.worldImg.grid(row=17, column=19)
-
-            if tkMessageBox.askokcancel("K Means Clustering", "Clustering completed successfully!"):
-                root.destroy()
-                sys.exit()
+                if tkMessageBox.askokcancel("K Means Clustering", "Clustering completed successfully!"):
+                    root.destroy()
+                    sys.exit()
 
 
 # Placing window in the center of the screen
