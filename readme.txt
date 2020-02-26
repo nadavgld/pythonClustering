@@ -1,4 +1,4 @@
-K Means Clustering, made by Nadav Grinberg 305780504 and Guy Zaks 203574009.
+K Means Clustering, made by Nadav Grinberg XXXXXX and Guy Zaks XXXXXX.
 
 1. choose an excel file that contains the dataset with the following data:
 1.1. country
